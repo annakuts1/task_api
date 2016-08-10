@@ -1,10 +1,11 @@
 class TasksController < ApplicationController
+  include ActionController::HttpAuthentication::Token::ControllerMethods
   before_action :set_Task, only: [:show, :update, :destroy]
-
+  before_action :authenticate
   # GET /tasks
   def index
     @tasks = Task.all
-
+    
     render json: @tasks,status: 200
   end
 
@@ -20,9 +21,9 @@ class TasksController < ApplicationController
     if @task.save
       render json: @task, status: :created, location: @task
     else
-      render json: @task.errors, status: :unprocessable_entity
+      render json: @task.errors, status: 422
     end
-    
+
   end
 
   # PATCH/PUT /tasks/1
@@ -30,7 +31,7 @@ class TasksController < ApplicationController
     if @task.update(task_params)
       render json: @task, status:200
     else
-      render json: @task.errors, status: :unprocessable_entity
+      render json: @task.errors, status: 422
     end
   end
 
@@ -51,4 +52,11 @@ class TasksController < ApplicationController
     def task_params
       params.require(:task).permit(:title, :due_by,:assign_to,:description,:email,:note_at)
     end
+    protected
+ def authenticate
+ authenticate_or_request_with_http_token('Tasks') do |token, options|
+ @current_user=User.find_by(auth_token: token)
+
+ end
+ end
 end
